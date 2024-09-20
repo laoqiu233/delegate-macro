@@ -79,6 +79,8 @@ object delegateMacro {
     val superClassTypedTree = annotteeClassParents.toList match {
       case head :: _ =>
         c.typecheck(head, mode = c.TYPEmode)
+      case Nil =>
+        c.abort(c.enclosingPosition, "Annotated class should at least have one parent.")
     }
 
     val delegateeParamOpt = annotteeClassParams
