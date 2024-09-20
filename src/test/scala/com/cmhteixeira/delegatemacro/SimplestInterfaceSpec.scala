@@ -183,4 +183,28 @@ class SimplestInterfaceSpec extends FlatSpec with Matchers {
       s"FirstList(param1: 30, param2: Bar); SecondList(param1: Qux, param2: 35)"
   }
 
+  "Delegation" should "work with companion objects" in {
+    class FooImpl extends Foo {
+      def bar(a1: Int, a2: String)(b1: String, b2: Int): String =
+        s"FirstList(param1: $a1, param2: $a2); SecondList(param1: $b1, param2: $b2)"
+
+      def baz(a: Int, b: String): String = "not-relevant"
+
+      override def barBaz(a: String): String = s"FooImpl=$a"
+    }
+
+    @Delegate
+    class MyFoo(delegate: Foo) extends Foo
+
+    object MyFoo {
+      val notRemoved: Boolean = true
+    }
+
+    new MyFoo(new FooImpl).barBaz("Monkey") shouldBe s"Default-Implementation-Monkey"
+    new MyFoo(new FooImpl).baz(30, "Baz") shouldBe "not-relevant"
+    new MyFoo(new FooImpl).bar(30, "Bar")("Qux", 35) shouldBe
+      s"FirstList(param1: 30, param2: Bar); SecondList(param1: Qux, param2: 35)"
+    MyFoo.notRemoved shouldBe true
+  }
+
 }

@@ -65,8 +65,8 @@ object delegateMacro {
       case _ => false
     }
 
-    val annotateeClass: ClassDef = annottees.map(_.tree).toList match {
-      case (claz: ClassDef) :: Nil => claz
+    val (annotateeClass, rest) = annottees.map(_.tree).toList match {
+      case (claz: ClassDef) :: rest => (claz, rest)
       case _ => c.abort(c.enclosingPosition, "Unexpected annottee. Only applicable to class definitions.")
     }
 
@@ -132,10 +132,16 @@ object delegateMacro {
             .map(_.map(_.name.toTermName))})"
         }
 
-    val resTree = annotateeClass match {
+    val classTree = annotateeClass match {
       case q"$mods class $tpname[..$tparams] $ctorMods(...$paramss) extends { ..$earlydefns } with ..$parents { $self => ..$stats }" =>
         q"$mods class $tpname[..$tparams] $ctorMods(...$paramss) extends { ..$earlydefns } with ..$parents { $self => ..${stats.toList ::: interfaceMethods} }"
     }
+
+    val resTree =
+      q"""
+         $classTree
+         ..$rest
+       """
 
     c.info(
       c.enclosingPosition,
